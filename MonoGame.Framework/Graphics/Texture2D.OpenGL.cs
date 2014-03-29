@@ -241,14 +241,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
         private void PlatformGetData<T>(int level, Rectangle? rect, T[] data, int startIndex, int elementCount) where T : struct
         {
-#if IOS
-
-            // Reading back a texture from GPU memory is unsupported
-            // in OpenGL ES 2.0 and no work around has been implemented.           
-            throw new NotSupportedException("OpenGL ES 2.0 does not support texture reads.");
-#endif
-#if ANDROID
-
+#if IOS || ANDROID
             Rectangle r;
             if (rect != null)
             {
@@ -258,29 +251,108 @@ namespace Microsoft.Xna.Framework.Graphics
             {
                 r = new Rectangle(0, 0, Width, Height);
             }
-            			
-			// Get the Color values
-			if (typeof(T) == typeof(uint))
-			{
-				Color[] colors = new Color[elementCount];
-				GetData<Color>(level, rect, colors, startIndex, elementCount);
-				uint[] final = data as uint[];
-				for (int i = 0; i < final.Length; i++)
-				{
-					final[i] = (uint)
-					(
-						// use correct xna byte order (and remember to convert it yourself as needed)
-						colors[i].A << 24 |
-						colors[i].B << 16 |
-						colors[i].G << 8 |
-						colors[i].R
-					);
-				}
-			}
+                        
+            // Get the Color values
+            if (typeof(T) == typeof(uint))
+            {
+                Color[] colors = new Color[elementCount];
+                GetData<Color>(level, rect, colors, startIndex, elementCount);
+                uint[] final = data as uint[];
+                for (int i = 0; i < final.Length; i++)
+                {
+                    switch(Format)
+                    {
+                        case SurfaceFormat.Color: //kTexture2DPixelFormat_RGBA8888
+                        case SurfaceFormat.Dxt3:
+                            final[i] = (uint)
+                                (
+                                    colors[i].A << 24 |
+                                    colors[i].B << 16 |
+                                    colors[i].G << 8  |
+                                    colors[i].R
+                                );
+                            break;
+                        case SurfaceFormat.Bgra4444: //kTexture2DPixelFormat_RGBA4444
+                            final[i] = (uint)
+                                (
+                                    (colors[i].R & 0x0f) << 12 |
+                                    (colors[i].G & 0x0f) << 8  |
+                                    (colors[i].B & 0x0f) << 4  |
+                                    (colors[i].A & 0x0f)
+                                );
+                            break;
+                        case SurfaceFormat.Bgra5551: //kTexture2DPixelFormat_RGB5A1
+                            final[i] = (uint)
+                                (
+                                    (colors[i].R & 0xf8) << 8 |
+                                    (colors[i].G & 0xf8) << 3 |
+                                    (colors[i].B & 0xf8) >> 2 |
+                                    (colors[i].A & 0x01)
+                                );
+                            break;
+                        case SurfaceFormat.Bgr565: //kTexture2DPixelFormat_RGB565
+                            final[i] = (uint)
+                                (
+                                    (colors[i].R & 0xf8) << 8 |
+                                    (colors[i].G & 0xfC) << 3 |
+                                    (colors[i].B & 0xf8) >> 3  
+                                );
+                            break;
+                    }
+                }
+            }
+            else if (typeof(T) == typeof(ushort))
+            {
+                Color[] colors = new Color[elementCount];
+                GetData<Color>(level, rect, colors, startIndex, elementCount);
+                ushort[] final = data as ushort[];
+                for (int i = 0; i < final.Length; i++)
+                {
+                    switch(Format)
+                    {
+                    case SurfaceFormat.Color: //kTexture2DPixelFormat_RGBA8888
+                    case SurfaceFormat.Dxt3:
+                        final[i] = (ushort)
+                            (
+                                (colors[i].A >> 4) << 12 |
+                                (colors[i].B >> 4) << 8  |
+                                (colors[i].G >> 4) << 4  |
+                                (colors[i].R >> 4)
+                            );
+                        break;
+                    case SurfaceFormat.Bgra4444: //kTexture2DPixelFormat_RGBA4444
+                        final[i] = (ushort)
+                            (
+                                (colors[i].R & 0x0f) << 12 |
+                                (colors[i].G & 0x0f) << 8  |
+                                (colors[i].B & 0x0f) << 4  |
+                                (colors[i].A & 0x0f)
+                                );
+                        break;
+                    case SurfaceFormat.Bgra5551: //kTexture2DPixelFormat_RGB5A1
+                        final[i] = (ushort)
+                            (
+                                (colors[i].R & 0xf8) << 8 |
+                                (colors[i].G & 0xf8) << 3 |
+                                (colors[i].B & 0xf8) >> 2 |
+                                (colors[i].A & 0x01)
+                                );
+                        break;
+                    case SurfaceFormat.Bgr565: //kTexture2DPixelFormat_RGB565
+                        final[i] = (ushort)
+                            (
+                                (colors[i].R & 0xf8) << 8 |
+                                (colors[i].G & 0xfC) << 3 |
+                                (colors[i].B & 0xf8) >> 3  
+                                );
+                        break;
+                    }
+                }
+            }
             // Get the Color values
             else if ((typeof(T) == typeof(Color)))
             {
-				byte[] imageInfo = GetTextureData(0);
+                byte[] imageInfo = GetTextureData(0);
 
                 int rWidth = r.Width;
                 int rHeight = r.Height;
@@ -307,17 +379,7 @@ namespace Microsoft.Xna.Framework.Graphics
                                 result.A = imageInfo[pixelOffset + 3];
                                 break;
                             case SurfaceFormat.Bgra4444: //kTexture2DPixelFormat_RGBA4444
-                                //								sz = 2;
-                                //								pos = ((y * imageSize.Width) + x) * sz;
-                                //								pixelOffset = new IntPtr (imageData.ToInt64 () + pos);
-                                //	
-                                //								Marshal.Copy (pixelOffset, pixel, 0, 4);	
-                                //	
-                                //								result.R = pixel [0];
-                                //								result.G = pixel [1];
-                                //								result.B = pixel [2];
-                                //								result.A = pixel [3];
-                                sz = 2;
+                                sz = 4;
                                 pixelOffset = dataRowColOffset * sz;
                                 result.R = imageInfo[pixelOffset];
                                 result.G = imageInfo[pixelOffset + 1];
@@ -325,16 +387,15 @@ namespace Microsoft.Xna.Framework.Graphics
                                 result.A = imageInfo[pixelOffset + 3];
                                 break;
                             case SurfaceFormat.Bgra5551: //kTexture2DPixelFormat_RGB5A1
-                                //								sz = 2;
-                                //								pos = ((y * imageSize.Width) + x) * sz;
-                                //								pixelOffset = new IntPtr (imageData.ToInt64 () + pos);
-                                //								Marshal.Copy (pixelOffset, pixel, 0, 4);	
-                                //	
-                                //								result.R = pixel [0];
-                                //								result.G = pixel [1];
-                                //								result.B = pixel [2];
-                                //								result.A = pixel [3];
-                                sz = 2;
+                                sz = 4;
+                                pixelOffset = dataRowColOffset * sz;
+                                result.R = imageInfo[pixelOffset];
+                                result.G = imageInfo[pixelOffset + 1];
+                                result.B = imageInfo[pixelOffset + 2];
+                                result.A = imageInfo[pixelOffset + 3];
+                                break;
+                            case SurfaceFormat.Bgr565: //kTexture2DPixelFormat_RGB565
+                                sz = 4;
                                 pixelOffset = dataRowColOffset * sz;
                                 result.R = imageInfo[pixelOffset];
                                 result.G = imageInfo[pixelOffset + 1];
@@ -342,12 +403,6 @@ namespace Microsoft.Xna.Framework.Graphics
                                 result.A = imageInfo[pixelOffset + 3];
                                 break;
                             case SurfaceFormat.Alpha8:  // kTexture2DPixelFormat_A8 
-                                //								sz = 1;
-                                //								pos = ((y * imageSize.Width) + x) * sz;
-                                //								pixelOffset = new IntPtr (imageData.ToInt64 () + pos);								
-                                //								Marshal.Copy (pixelOffset, pixel, 0, 4);	
-                                //	
-                                //								result.A = pixel [0];
                                 sz = 1;
                                 pixelOffset = dataRowColOffset * sz;
                                 result.A = imageInfo[pixelOffset];
@@ -397,6 +452,88 @@ namespace Microsoft.Xna.Framework.Graphics
             }
 #endif
         }
+
+#if IOS || ANDROID
+        private byte[] GetTextureData(int ThreadPriorityLevel)
+        {
+
+            int framebufferId = -1;
+
+            // No more render buffer
+
+            GL.GenFramebuffers(1, ref framebufferId);
+            GraphicsExtensions.CheckGLError();
+            GL.BindFramebuffer(All.Framebuffer, framebufferId);
+            GraphicsExtensions.CheckGLError();
+
+            // attach the texture to FBO color attachment point
+            GL.FramebufferTexture2D(All.Framebuffer, All.ColorAttachment0,
+                                    All.Texture2D, this.glTexture, 0);
+
+            GraphicsExtensions.CheckGLError();
+            All status = GL.CheckFramebufferStatus(All.Framebuffer);
+            
+            if (status != All.FramebufferComplete)
+                throw new Exception("Error creating framebuffer: " + status);   
+
+            byte[] imageInfo = null;
+            int sz = 0;
+                        
+            // We use 4 bytes per pixel
+            switch (this.Format)
+            {
+                case SurfaceFormat.Color: //kTexture2DPixelFormat_RGBA8888
+                case SurfaceFormat.Dxt3:
+                    sz = 4;
+                    imageInfo = new byte[(Width * Height) * sz];
+                    break;
+                    
+                case SurfaceFormat.Bgra4444: //kTexture2DPixelFormat_RGBA4444
+                    sz = 4;
+                    imageInfo = new byte[(Width * Height) * sz];
+                    break;
+                    
+                case SurfaceFormat.Bgra5551: //kTexture2DPixelFormat_RGB5A1
+                    sz = 4;
+                    imageInfo = new byte[(Width * Height) * sz];
+                    break;
+                    
+            case SurfaceFormat.Bgr565://kTexture2DPixelFormat_RGB565
+                    sz = 4;
+                    imageInfo = new byte[(Width * Height) * sz];
+                    break;
+                    
+                case SurfaceFormat.Alpha8:  // kTexture2DPixelFormat_A8 
+                    sz = 1;
+                    imageInfo = new byte[(Width * Height) * sz];
+                    break;
+                    
+                default:
+                    throw new NotSupportedException("Texture format");
+            }
+
+            GL.BindFramebuffer(All.Framebuffer, framebufferId);
+            GraphicsExtensions.CheckGLError();
+
+            GL.Viewport(0, 0, Width, Height);
+            GraphicsExtensions.CheckGLError();
+
+            GL.ReadPixels(0,0,Width, Height, All.Rgba, All.UnsignedByte, imageInfo);
+            GraphicsExtensions.CheckGLError();           
+
+            // Reset frame buffer using glFrameBuffer as ID and not 0
+            GL.BindFramebuffer(All.Framebuffer, this.GraphicsDevice.glFramebuffer);
+            GraphicsExtensions.CheckGLError();
+            
+            GL.Viewport(0, 0, this.GraphicsDevice.Viewport.Width, this.GraphicsDevice.Viewport.Height);
+            GraphicsExtensions.CheckGLError();
+
+            GL.DeleteFramebuffers(1, ref framebufferId);
+            GraphicsExtensions.CheckGLError();
+
+            return imageInfo;
+        }
+#endif
 
         private static Texture2D PlatformFromStream(GraphicsDevice graphicsDevice, Stream stream)
         {
