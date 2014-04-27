@@ -107,7 +107,7 @@ namespace MonoGame.Framework.WindowsPhone
             if (page == null)
                 throw new NullReferenceException("The page parameter cannot be null!");
 
-            UIElement drawingSurface = page.Content as DrawingSurfaceBackgroundGrid;
+            UIElement drawingSurface = page.Content as DrawingSurface;
             
             MediaElement mediaElement = null;
             for (int i = 0; i < VisualTreeHelper.GetChildrenCount(page.Content); i++)
@@ -119,11 +119,8 @@ namespace MonoGame.Framework.WindowsPhone
                     drawingSurface = (DrawingSurface)child;
             }
 
-            if (!(drawingSurface is DrawingSurfaceBackgroundGrid) && !(drawingSurface is DrawingSurface))
-                throw new NullReferenceException("The drawing surface could not be found!");
-
             if (mediaElement == null)
-                throw new NullReferenceException("The media element could not be found! Add it to the GamePage.");
+                mediaElement = new MediaElement();
 
             Microsoft.Xna.Framework.Media.MediaPlayer._mediaElement = mediaElement;
 
@@ -143,41 +140,31 @@ namespace MonoGame.Framework.WindowsPhone
 
             SurfaceTouchHandler surfaceTouchHandler = new SurfaceTouchHandler();
 
-            if (drawingSurface is DrawingSurfaceBackgroundGrid)
-            {
-                // Hookup the handlers for updates and touch.
-                DrawingSurfaceBackgroundGrid drawingSurfaceBackgroundGrid = (DrawingSurfaceBackgroundGrid)drawingSurface;
-                drawingSurfaceBackgroundGrid.SetBackgroundContentProvider(new DrawingSurfaceBackgroundContentProvider(game));
-                drawingSurfaceBackgroundGrid.SetBackgroundManipulationHandler(surfaceTouchHandler);
-            }
-            else
-            {
-                var drawingSurfaceUpdateHandler = new DrawingSurfaceUpdateHandler(game);
-                DrawingSurface ds = (DrawingSurface)drawingSurface;
+            var drawingSurfaceUpdateHandler = new DrawingSurfaceUpdateHandler(game);
+            DrawingSurface ds = (DrawingSurface)drawingSurface;
 
-                RoutedEventHandler onLoadedHandler = (object sender, RoutedEventArgs e) =>
+            RoutedEventHandler onLoadedHandler = (object sender, RoutedEventArgs e) =>
+            {
+                if (sender != ds)
+                    return;
+
+                if (initializedSurfaces.ContainsKey(ds) == false)
                 {
-                    if (sender != ds)
-                        return;
+                    // Hook-up native component to DrawingSurface
+                    ds.SetContentProvider(drawingSurfaceUpdateHandler.ContentProvider);
+                    ds.SetManipulationHandler(surfaceTouchHandler);
 
-                    if (initializedSurfaces.ContainsKey(ds) == false)
-                    {
-                        // Hook-up native component to DrawingSurface
-                        ds.SetContentProvider(drawingSurfaceUpdateHandler.ContentProvider);
-                        ds.SetManipulationHandler(surfaceTouchHandler);
+                    // Make sure surface is not initialized twice...
+                    initializedSurfaces.Add(ds, true);
+                }
+            };
 
-                        // Make sure surface is not initialized twice...
-                        initializedSurfaces.Add(ds, true);
-                    }
-                };
+            // Don't wait for loaded event here since control might
+            // be loaded already.
+            onLoadedHandler(ds, null);
 
-                // Don't wait for loaded event here since control might
-                // be loaded already.
-                onLoadedHandler(ds, null);
-
-                ds.Unloaded += OnDrawingSurfaceUnloaded;
-                ds.Loaded += onLoadedHandler;
-            }
+            ds.Unloaded += OnDrawingSurfaceUnloaded;
+            ds.Loaded += onLoadedHandler;
 
             // Return the constructed, but not initialized game.
             return game;
