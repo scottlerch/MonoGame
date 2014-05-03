@@ -3,8 +3,6 @@
 // file 'LICENSE.txt', which is part of this source code package.
 
 using System;
-using System.Runtime.InteropServices;
-using System.Collections.Generic;
 
 #if WINRT
 using System.Reflection;
@@ -54,7 +52,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			int max = 0;
 			for (var i = 0; i < elements.Length; i++)
 			{
-                var start = elements[i].Offset + elements[i].VertexElementFormat.GetTypeSize();
+                var start = elements[i].Offset + elements[i].VertexElementFormat.GetSize();
 				if (max < start)
 					max = start;
 			}

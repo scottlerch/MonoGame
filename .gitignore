@@ -50,11 +50,16 @@ monodroid*.msi
 #Unix temporary files
 *~
 
+# Output docs
+Documentation/Output/
+
 # Generated Project files
 # These should be changed to just *.csproj and *.sln when
 # all projects have been converted over.
 MonoGame.Framework.Android.csproj
 MonoGame.Framework.Android.sln
+MonoGame.Framework.Angle.csproj
+MonoGame.Framework.Angle.sln
 MonoGame.Framework.iOS.csproj
 MonoGame.Framework.iOS.sln
 MonoGame.Framework.Linux.csproj
@@ -73,4 +78,9 @@ MonoGame.Framework.WindowsGL.csproj
 MonoGame.Framework.WindowsGL.sln
 MonoGame.Framework.WindowsPhone.csproj
 MonoGame.Framework.WindowsPhone.sln
-
+MonoGame.Framework.Content.Pipeline.Windows.csproj
+MonoGame.Framework.Content.Pipeline.Linux.csproj
+MonoGame.Framework.Content.Pipeline.MacOS.csproj
+MonoGame.Framework.Web.csproj
+MonoGame.Framework.Web.sln
+/ThirdParty/*.sln

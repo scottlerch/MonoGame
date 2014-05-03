@@ -3,9 +3,7 @@
 // file 'LICENSE.txt', which is part of this source code package.
 
 using System;
-using System.Runtime.InteropServices;
 
-#if OPENGL
 #if MONOMAC
 using MonoMac.OpenGL;
 #elif WINDOWS || LINUX
@@ -19,7 +17,6 @@ using TextureTarget = OpenTK.Graphics.ES20.All;
 using TextureParameterName = OpenTK.Graphics.ES20.All;
 using TextureMinFilter = OpenTK.Graphics.ES20.All;
 #endif
-#endif
 
 namespace Microsoft.Xna.Framework.Graphics
 {
@@ -32,6 +29,9 @@ namespace Microsoft.Xna.Framework.Graphics
         private void PlatformConstruct(GraphicsDevice graphicsDevice, int size, bool mipMap, SurfaceFormat format, bool renderTarget)
         {
             this.glTarget = TextureTarget.TextureCubeMap;
+
+            Threading.BlockOnUIThread(() =>
+            {
 #if IOS || ANDROID
 			GL.GenTextures(1, ref this.glTexture);
 #else
@@ -84,6 +84,7 @@ namespace Microsoft.Xna.Framework.Graphics
 #endif
                 GraphicsExtensions.CheckGLError();
             }
+            });
         }
 
         private void PlatformGetData<T>(CubeMapFace cubeMapFace, T[] data) where T : struct
@@ -102,8 +103,10 @@ namespace Microsoft.Xna.Framework.Graphics
 #endif
         }
 
-        private void PlatformSetData(CubeMapFace face, int level, IntPtr dataPtr, int xOffset, int yOffset, int width, int height)
+        private void PlatformSetData<T>(CubeMapFace face, int level, IntPtr dataPtr, int xOffset, int yOffset, int width, int height)
         {
+            Threading.BlockOnUIThread(() =>
+            {
             GL.BindTexture(TextureTarget.TextureCubeMap, this.glTexture);
             GraphicsExtensions.CheckGLError();
 
@@ -117,6 +120,7 @@ namespace Microsoft.Xna.Framework.Graphics
                 GL.TexSubImage2D(target, level, xOffset, yOffset, width, height, glFormat, glType, dataPtr);
                 GraphicsExtensions.CheckGLError();
             }
+            });
         }
 
 		private TextureTarget GetGLCubeFace(CubeMapFace face) 

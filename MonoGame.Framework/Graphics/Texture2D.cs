@@ -4,17 +4,6 @@
 
 using System;
 using System.IO;
-using System.Runtime.InteropServices;
-using Microsoft.Xna.Framework.Content;
-using System.Diagnostics;
-
-#if !PSM
-using System.Drawing;
-#endif
-
-#if WINDOWS || LINUX || MONOMAC
-using System.Drawing.Imaging;
-#endif
 
 namespace Microsoft.Xna.Framework.Graphics
 {
@@ -48,7 +37,7 @@ namespace Microsoft.Xna.Framework.Graphics
         {
         }
 
-        protected Texture2D(GraphicsDevice graphicsDevice, int width, int height, bool mipmap, SurfaceFormat format, SurfaceType type)
+        internal Texture2D(GraphicsDevice graphicsDevice, int width, int height, bool mipmap, SurfaceFormat format, SurfaceType type)
             : this(graphicsDevice, width, height, mipmap, format, type, false)
         {
         }
@@ -145,6 +134,17 @@ namespace Microsoft.Xna.Framework.Graphics
         public void Reload(Stream textureStream)
         {
             PlatformReload(textureStream);
+        }
+
+        //Converts Pixel Data from ARGB to ABGR
+        private static void ConvertToABGR(int pixelHeight, int pixelWidth, int[] pixels)
+        {
+            int pixelCount = pixelWidth * pixelHeight;
+            for (int i = 0; i < pixelCount; ++i)
+            {
+                uint pixel = (uint)pixels[i];
+                pixels[i] = (int)((pixel & 0xFF00FF00) | ((pixel & 0x00FF0000) >> 16) | ((pixel & 0x000000FF) << 16));
+            }
         }
 	}
 }

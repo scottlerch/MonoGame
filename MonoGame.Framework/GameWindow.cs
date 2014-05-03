@@ -80,6 +80,13 @@ namespace Microsoft.Xna.Framework {
 
 		public abstract Rectangle ClientBounds { get; }
 
+	    internal bool _allowAltF4 = true;
+
+        /// <summary>
+        /// Gets or sets the bool that enables the Alt+F4 usage for window closing(on all platforms, except WinRT). Its true by default.
+        /// </summary>
+        public virtual bool AllowAltF4 { get { return _allowAltF4; } set { _allowAltF4 = value; } } 
+
 #if WINDOWS && DIRECTX
         /// <summary>
         /// The location of this window on the desktop, eg: global coordinate space
@@ -128,10 +135,7 @@ namespace Microsoft.Xna.Framework {
 
         protected GameWindow()
         {
-#if !ANDROID
-            // TODO: Fix the AndroidGameWindow!
             TouchPanelState = new TouchPanelState(this);
-#endif
         }
 
 		#endregion Properties
@@ -142,9 +146,9 @@ namespace Microsoft.Xna.Framework {
 		public event EventHandler<EventArgs> OrientationChanged;
 		public event EventHandler<EventArgs> ScreenDeviceNameChanged;
 
-#if WINDOWS || LINUX
+#if WINDOWS || LINUX || ANGLE
 
-		/// <summary>
+        /// <summary>
 		/// Use this event to retrieve text for objects like textbox's.
 		/// This event is not raised by noncharacter keys.
 		/// This event also supports key repeat.
@@ -199,7 +203,7 @@ namespace Microsoft.Xna.Framework {
 				ScreenDeviceNameChanged (this, EventArgs.Empty);
 		}
 
-#if WINDOWS || LINUX
+#if WINDOWS || LINUX || ANGLE
 		protected void OnTextInput(object sender, TextInputEventArgs e)
 		{
 			if (TextInput != null)
