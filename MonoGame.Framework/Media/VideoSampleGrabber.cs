@@ -7,8 +7,13 @@ using System.Text;
 
 namespace Microsoft.Xna.Framework.Media
 {
-    internal class VideoSampleGrabber : SharpDX.CallbackBase, SampleGrabberSinkCallback
+    internal class VideoSampleGrabber : SampleGrabberSinkCallback
     {
+        public VideoSampleGrabber(IntPtr nativePtr)
+            : base(nativePtr)
+        {
+        }
+
         internal byte[] TextureData { get; private set; }
 
         public void OnProcessSample(Guid guidMajorMediaType, int dwSampleFlags, long llSampleTime, long llSampleDuration, IntPtr sampleBufferRef, int dwSampleSize)

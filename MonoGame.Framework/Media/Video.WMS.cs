@@ -1,4 +1,5 @@
-﻿using SharpDX;
+﻿using System.Windows.Forms.VisualStyles;
+using SharpDX;
 using SharpDX.MediaFoundation;
 using System;
 using System.Collections.Generic;
@@ -65,7 +66,7 @@ namespace Microsoft.Xna.Framework.Media
                     {
                         Activate activate;
 
-                        SampleGrabber = new VideoSampleGrabber();
+                        SampleGrabber = new VideoSampleGrabber(mediaSource.NativePointer);
 
                         _mediaType = new MediaType();
 
