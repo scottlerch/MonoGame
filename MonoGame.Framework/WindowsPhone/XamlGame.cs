@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Media;
 using SharpDX;
 using SharpDX.Direct3D11;
 using Microsoft.Phone.Controls;
@@ -109,26 +110,33 @@ namespace MonoGame.Framework.WindowsPhone
             if (page == null)
                 throw new NullReferenceException("The page parameter cannot be null!");
 
-            UIElement drawingSurface = page.Content as DrawingSurface;
-            
+            UIElement drawingSurfaceBackgroundGrid = page.Content as DrawingSurfaceBackgroundGrid;
+            DrawingSurface drawingSurface = null;
+
             MediaElement mediaElement = null;
             for (int i = 0; i < VisualTreeHelper.GetChildrenCount(page.Content); i++)
             {
                 var child = VisualTreeHelper.GetChild(page.Content, i);
                 if (child is MediaElement)
                     mediaElement = (MediaElement)child;
-                else if (drawingSurface == null && child is DrawingSurface)
+                else if (child is DrawingSurface)
                     drawingSurface = (DrawingSurface)child;
             }
 
-            if (mediaElement == null)
-                mediaElement = new MediaElement();
+            if (!(drawingSurfaceBackgroundGrid is DrawingSurfaceBackgroundGrid))
+                throw new NullReferenceException("The drawing surface background grid could not be found!");
 
-            Microsoft.Xna.Framework.Media.MediaPlayer._mediaElement = mediaElement;
+            if (!(drawingSurface is DrawingSurface))
+                throw new NullReferenceException("The drawing surface could not be found!");
+
+            if (mediaElement == null)
+                throw new NullReferenceException("The media element could not be found! Add it to the GamePage.");
+
+            MediaPlayer._mediaElement = mediaElement;
 
             WindowsPhoneGamePlatform.LaunchParameters = launchParameters;
-            WindowsPhoneGameWindow.Width = ((FrameworkElement)drawingSurface).ActualWidth;
-            WindowsPhoneGameWindow.Height = ((FrameworkElement)drawingSurface).ActualHeight;
+            WindowsPhoneGameWindow.Width = ((FrameworkElement)drawingSurfaceBackgroundGrid).ActualWidth;
+            WindowsPhoneGameWindow.Height = ((FrameworkElement)drawingSurfaceBackgroundGrid).ActualHeight;
             WindowsPhoneGameWindow.Page = page;
 
             Microsoft.Xna.Framework.Audio.SoundEffect.InitializeSoundEffect();
